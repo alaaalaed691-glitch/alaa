@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% set title = 'إنشاء حساب' %}
+
+{% block content %}
+<div class="card pad" style="max-width:560px;margin:0 auto;">
+  <h2 style="margin:0 0 8px">إنشاء حساب</h2>
+  <p class="muted" style="margin:0 0 16px">اختر دورك: طالب أو معلم.</p>
+
+  <div id="msg"></div>
+
+  <form id="form">
+    <div class="grid-2">
+      <div class="field">
+        <div class="label">اسم المستخدم</div>
+        <input class="input" name="username" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <div class="label">الدور</div>
+        <select name="role" required>
+          <option value="student">طالب</option>
+          <option value="teacher">معلم</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label">كلمة المرور</div>
+      <input class="input" type="password" name="password" autocomplete="new-password" required />
+    </div>
+
+    <button class="btn primary full" type="submit">إنشاء</button>
+  </form>
+
+  <div class="muted" style="margin-top:14px">
+    لديك حساب؟ <a class="pill" href="/login">تسجيل الدخول</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { api } from '/static/js/api.js';
+  import { qs, alertBox } from '/static/js/ui.js';
+
+  const form = qs('#form');
+  const msg = qs('#msg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.innerHTML = '';
+
+    const payload = {
+      username: form.username.value.trim(),
+      password: form.password.value,
+      role: form.role.value,
+    };
+
+    try {
+      await api.register(payload);
+      msg.appendChild(alertBox('success', 'تم إنشاء الحساب بنجاح. يمكنك الآن تسجيل الدخول.'));
+      setTimeout(() => (window.location.href = '/login'), 700);
+    } catch (err) {
+      msg.appendChild(alertBox('error', err.message || 'حدث خطأ'));
+    }
+  });
+</script>
+{% endblock %}

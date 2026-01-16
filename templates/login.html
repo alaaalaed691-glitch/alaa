@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% set title = 'تسجيل الدخول' %}
+
+{% block content %}
+<div class="card pad" style="max-width:520px;margin:0 auto;">
+  <h2 style="margin:0 0 8px">تسجيل الدخول</h2>
+  <p class="muted" style="margin:0 0 16px">أدخل اسم المستخدم وكلمة المرور.</p>
+
+  <div id="msg"></div>
+
+  <form id="form">
+    <div class="field">
+      <div class="label">اسم المستخدم</div>
+      <input class="input" name="username" autocomplete="username" required />
+    </div>
+    <div class="field">
+      <div class="label">كلمة المرور</div>
+      <input class="input" type="password" name="password" autocomplete="current-password" required />
+    </div>
+
+    <button class="btn primary full" type="submit">دخول</button>
+  </form>
+
+  <div class="muted" style="margin-top:14px">
+    ليس لديك حساب؟ <a class="pill" href="/register">إنشاء حساب</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { api } from '/static/js/api.js';
+  import { setAuth } from '/static/js/auth.js';
+  import { qs, alertBox } from '/static/js/ui.js';
+
+  const form = qs('#form');
+  const msg = qs('#msg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.innerHTML = '';
+
+    const payload = {
+      username: form.username.value.trim(),
+      password: form.password.value,
+    };
+
+    try {
+      const data = await api.login(payload);
+      const role = (data && data.role) ? String(data.role) : 'student';
+      setAuth({ username: payload.username, role });
+      msg.appendChild(alertBox('success', 'تم تسجيل الدخول بنجاح.'));
+      const next = (role === 'teacher' || role === 'admin') ? '/teacher' : '/challenges_ui';
+      setTimeout(() => (window.location.href = next), 350);
+    } catch (err) {
+      msg.appendChild(alertBox('error', err.message || 'حدث خطأ'));
+    }
+  });
+</script>
+{% endblock %}

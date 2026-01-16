@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title if title else 'المنصة الذكية' }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="/">المنصة الذكية</a>
+      <nav class="nav-links" id="navLinks">
+        <a class="pill" href="/">الرئيسية</a>
+        <a class="pill" href="/challenges_ui">التحديات</a>
+        <a class="pill hidden" href="/teacher" id="navTeacher">لوحة المعلم</a>
+        <a class="pill" href="/login" id="navLogin">تسجيل الدخول</a>
+        <a class="pill primary" href="/register" id="navRegister">إنشاء حساب</a>
+        <button class="pill danger hidden" id="navLogout" type="button">تسجيل الخروج</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 18px 0 0;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="row" style="justify-content:space-between;">
+        <span>© {{ 2026 }} المنصة الذكية</span>
+        <a class="muted" href="/api">API</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { getAuth, clearAuth, isTeacher } from '/static/js/auth.js';
+    const auth = getAuth();
+
+    const navLogin = document.getElementById('navLogin');
+    const navRegister = document.getElementById('navRegister');
+    const navLogout = document.getElementById('navLogout');
+    const navTeacher = document.getElementById('navTeacher');
+    const navChallenges = document.querySelector('a[href="/challenges_ui"]');
+
+    if (auth) {
+      navLogin?.classList.add('hidden');
+      navRegister?.classList.add('hidden');
+      navLogout?.classList.remove('hidden');
+      if (isTeacher(auth)) navTeacher?.classList.remove('hidden');
+
+      if (isTeacher(auth)) {
+        navChallenges?.classList.add('hidden');
+        const p = window.location.pathname || '';
+        if (p === '/challenges_ui' || p === '/challenge' || p === '/challenges') {
+          window.location.replace('/teacher');
+        }
+      }
+
+      navLogout?.addEventListener('click', () => {
+        clearAuth();
+        window.location.href = '/';
+      });
+    } else {
+      navTeacher?.classList.add('hidden');
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

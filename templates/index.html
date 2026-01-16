@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% set title = 'الرئيسية' %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-grid">
+    <div class="card pad">
+      <h1 class="h-title">تعلّم البرمجة خطوة بخطوة</h1>
+      <p class="h-sub">منصة عربية تساعد الطالب على حل تحديات برمجية مبنية على كتل (JSON) مع تقييم ذكي وتغذية راجعة فورية.</p>
+      <div class="row">
+        <a class="btn primary" href="/challenges_ui">ابدأ بالتحديات</a>
+        <a class="btn" href="/register">إنشاء حساب</a>
+        <a class="btn" href="/login">تسجيل الدخول</a>
+      </div>
+      <div style="margin-top:14px" class="row">
+        <span class="badge">طالب</span>
+        <span class="badge">معلم</span>
+        <span class="badge">تقييم ذكي</span>
+      </div>
+    </div>
+
+    <div class="card pad">
+      <h2 style="margin:0 0 10px">كيف تعمل؟</h2>
+      <div class="muted" style="line-height:1.9">
+        <div>1) سجّل كطالب أو معلم</div>
+        <div>2) اختر تحديًا</div>
+        <div>3) ألصق كود الكتل بصيغة JSON</div>
+        <div>4) استلم النتيجة والتغذية الراجعة</div>
+      </div>
+      <div style="margin-top:14px" class="alert warn">
+        ملاحظة: الواجهة الحالية تستقبل JSON مباشرة. يمكن لاحقًا إضافة محرّر كتل.
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

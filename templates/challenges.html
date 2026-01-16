@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% set title = 'التحديات' %}
+
+{% block content %}
+<div class="row" style="justify-content:space-between;align-items:flex-end">
+  <div>
+    <h2 style="margin:0 0 6px">التحديات</h2>
+    <div class="muted">اختر تحديًا لعرض التفاصيل والتقديم.</div>
+  </div>
+  <div class="row">
+    <a class="btn" href="/teacher">لوحة المعلم</a>
+  </div>
+</div>
+
+<div id="msg" style="margin-top:12px"></div>
+
+<div id="list" style="margin-top:14px" class="grid-2"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { api } from '/static/js/api.js';
+  import { getAuth, isTeacher } from '/static/js/auth.js';
+  import { qs, setHtml, alertBox, escapeHtml } from '/static/js/ui.js';
+
+  const auth = getAuth();
+  const msg = qs('#msg');
+  const list = qs('#list');
+
+  function challengeCard(c) {
+    const concept = c.concept ? `<span class="tag">${escapeHtml(c.concept)}</span>` : '';
+    const diff = c.difficulty ? `<span class="tag">${escapeHtml(c.difficulty)}</span>` : '';
+    return `
+      <a class="panel pad" href="/challenge?id=${c.id}" style="display:block">
+        <div class="row" style="justify-content:space-between;">
+          <div style="font-weight:800">${escapeHtml(c.title || 'تحدي')}</div>
+          <div class="row">${concept}${diff}</div>
+        </div>
+        <div class="muted" style="margin-top:8px">اضغط لعرض التفاصيل</div>
+      </a>
+    `;
+  }
+
+  async function load() {
+    msg.innerHTML = '';
+    list.innerHTML = '';
+
+    if (!auth) {
+      msg.appendChild(alertBox('warn', 'يمكنك تصفح التحديات بدون تسجيل، لكن التقديم يحتاج تسجيل الدخول.'));
+    } else {
+      msg.appendChild(alertBox('success', `مرحبًا ${auth.username} (${auth.role})`));
+    }
+
+    try {
+      const challenges = await api.getChallenges();
+      if (!Array.isArray(challenges) || challenges.length === 0) {
+        msg.appendChild(alertBox('warn', 'لا توجد تحديات بعد.')); 
+        return;
+      }
+      setHtml(list, challenges.map(challengeCard).join(''));
+
+      // إخفاء زر لوحة المعلم لو ليس معلمًا
+      const teacherLinks = document.querySelectorAll('a[href="/teacher"]');
+      if (!(auth && isTeacher(auth))) {
+        teacherLinks?.forEach((a) => a.classList.add('hidden'));
+      }
+    } catch (err) {
+      msg.appendChild(alertBox('error', err.message || 'فشل تحميل التحديات'));
+    }
+  }
+
+  load();
+</script>
+{% endblock %}

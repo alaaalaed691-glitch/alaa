@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% set title = 'Blockly Demo' %}
+
+{% block content %}
+<div dir="ltr" lang="en" style="margin-top:14px">
+  <div class="row" style="justify-content:space-between;align-items:flex-end">
+    <div>
+      <h2 style="margin:0 0 6px">Blockly + Python</h2>
+      <div class="muted">Educational mini demo: blocks generate Python in real time.</div>
+    </div>
+    <div class="row">
+      <a class="btn" href="/">Home</a>
+    </div>
+  </div>
+
+  <div id="demoMsg" style="margin-top:12px"></div>
+
+  <div class="blockly-demo" style="margin-top:14px">
+    <div class="blockly-panel">
+      <div id="blocklyArea" class="blockly-surface"></div>
+    </div>
+
+    <div class="code-panel">
+      <div class="code-toolbar">
+        <div class="toolbar-left">
+          <select id="langSelect" class="tool-select">
+            <option value="python" selected>Python</option>
+          </select>
+          <select id="localeSelect" class="tool-select">
+            <option value="en" selected>English</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button id="runBtn" type="button" class="tool-btn">Run</button>
+          <button id="copyBtn" type="button" class="tool-btn">Copy</button>
+        </div>
+      </div>
+      <textarea id="codeTextarea"></textarea>
+      <div class="code-hint">Python updates automatically when blocks change.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css" />
+<link rel="stylesheet" href="/static/css/blockly_demo.css" />
+<script src="https://unpkg.com/blockly/blockly.min.js"></script>
+<script src="https://unpkg.com/blockly/python_compressed.js"></script>
+<script src="https://unpkg.com/blockly/msg/en.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.min.js"></script>
+<script src="/static/js/blockly_demo.js"></script>
+{% endblock %}

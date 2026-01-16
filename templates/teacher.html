@@ -1,0 +1,605 @@
+{% extends 'base.html' %}
+{% set title = 'لوحة المعلم' %}
+
+{% block content %}
+<div class="row" style="justify-content:space-between;align-items:flex-end">
+  <div>
+    <h2 style="margin:0 0 6px">لوحة المعلم</h2>
+    <div class="muted">لوحة موحدة لإدارة التحديات وملحقاتها (يتطلب حساب معلم).</div>
+  </div>
+  <div class="row">
+    <a class="btn" href="/challenges_ui">عرض التحديات</a>
+  </div>
+</div>
+
+<div id="msg" style="margin-top:12px"></div>
+
+<div id="teacherOnlyHint" class="alert warn hidden" style="margin-top:14px"></div>
+
+<div id="tabStatus" class="muted" style="margin-top:10px"></div>
+
+<div id="teacherTabs" class="row" style="margin-top:14px">
+  <button class="pill primary" type="button" data-tab="challenges">إدارة التحديات</button>
+  <button class="pill" type="button" data-tab="testcases">Test Cases</button>
+  <button class="pill" type="button" data-tab="templates">Solution Templates</button>
+  <button class="pill" type="button" data-tab="submissions">تقييم الحلول</button>
+  <button class="pill" type="button" data-tab="export">Export/Copy</button>
+  <button class="pill" type="button" data-tab="import">Import</button>
+</div>
+
+<section id="tab-challenges" style="margin-top:14px">
+  <div class="grid-2">
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">إضافة تحدي</h3>
+      <div id="challengeFormMsg"></div>
+      <form id="challengeForm">
+        <div class="field">
+          <div class="label">العنوان</div>
+          <input class="input" name="title" required />
+        </div>
+        <div class="field">
+          <div class="label">الوصف</div>
+          <textarea name="description" required></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <div class="label">required_blocks</div>
+            <div class="panel pad" style="padding:12px">
+              <div class="muted" style="margin-bottom:10px">اختر الكتل المطلوبة (يمكن اختيار أكثر من واحدة).</div>
+              <div class="row" style="gap:8px">
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="init_variable" /> init_variable</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="increment" /> increment</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="while_loop" /> while_loop</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="if_condition" /> if_condition</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="compare" /> compare</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="print_text" /> print_text</label>
+              </div>
+              <div class="row" style="gap:8px;margin-top:8px">
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="number_value" /> number_value</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="add_subtract" /> add_subtract</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="text_value" /> text_value</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="list_create" /> list_create</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="list_length" /> list_length</label>
+                <label class="tag" style="cursor:pointer"><input type="checkbox" name="required_blocks_pick" value="list_get" /> list_get</label>
+              </div>
+              <div class="divider" style="margin:10px 0"></div>
+              <div class="field" style="margin:0">
+                <div class="label">إضافات (اختياري)</div>
+                <input class="input" name="required_blocks_custom" placeholder='مثال: list_setIndex أو JSON Array أو comma list' />
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="label">الصعوبة</div>
+            <select name="difficulty">
+              <option value="easy">سهل</option>
+              <option value="medium">متوسط</option>
+              <option value="hard">صعب</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <div class="label">المفهوم concept</div>
+            <select name="concept">
+              <option value="loop">حلقات</option>
+              <option value="condition">شروط</option>
+              <option value="variables">متغيرات</option>
+              <option value="functions">دوال</option>
+              <option value="switch">Switch</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">قالب JSON (اختياري)</div>
+            <input class="input" name="json_template" placeholder='{"blocks": []}' />
+          </div>
+        </div>
+        <button class="btn primary full" type="submit">إضافة</button>
+      </form>
+    </div>
+
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">قائمة التحديات</h3>
+      <div class="muted" style="margin-bottom:10px">حذف التحدي يتطلب إرسال username في الطلب.</div>
+      <div id="challengeList"></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-submissions" class="hidden" style="margin-top:14px">
+  <div class="panel pad">
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div>
+        <h3 style="margin:0 0 6px">تقييم حلول الطلاب</h3>
+        <div class="muted">اعرض المحاولات ثم غيّر النتيجة/الملاحظة واحفظ.</div>
+      </div>
+      <button class="btn" type="button" id="btnRefreshSubs">تحديث</button>
+    </div>
+
+    <div class="grid-2" style="margin-top:12px">
+      <div class="field" style="margin:0">
+        <div class="label">فلترة حسب التحدي</div>
+        <select id="subsChallenge"></select>
+      </div>
+      <div class="field" style="margin:0">
+        <div class="label">فلترة حسب الطالب (username)</div>
+        <input id="subsStudent" class="input" placeholder="مثال: alla" />
+      </div>
+    </div>
+
+    <div id="subsMsg" style="margin-top:12px"></div>
+    <div id="subsList" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<section id="tab-testcases" class="hidden" style="margin-top:14px">
+  <div class="grid-2">
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">إضافة Test Case</h3>
+      <div id="tcMsg"></div>
+      <form id="tcForm">
+        <div class="field">
+          <div class="label">التحدي</div>
+          <select name="challenge_id" required></select>
+        </div>
+        <div class="field">
+          <div class="label">input_data</div>
+          <input class="input" name="input_data" />
+        </div>
+        <div class="field">
+          <div class="label">expected_output</div>
+          <input class="input" name="expected_output" />
+        </div>
+        <div class="field">
+          <div class="label">الوصف</div>
+          <input class="input" name="description" />
+        </div>
+        <button class="btn primary full" type="submit">إضافة</button>
+      </form>
+    </div>
+
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">Test Cases الحالية</h3>
+      <div class="muted" style="margin-bottom:10px">يتم جلبها عبر export لنفس التحدي.</div>
+      <div id="tcList" class="muted">اختر تحديًا لعرض test cases.</div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-templates" class="hidden" style="margin-top:14px">
+  <div class="grid-2">
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">إضافة Solution Template</h3>
+      <div id="tplMsg"></div>
+      <form id="tplForm">
+        <div class="field">
+          <div class="label">التحدي</div>
+          <select name="challenge_id" required></select>
+        </div>
+        <div class="field">
+          <div class="label">الاسم</div>
+          <input class="input" name="name" required />
+        </div>
+        <div class="field">
+          <div class="label">code_json</div>
+          <textarea name="code_json" required>{"blocks": []}</textarea>
+        </div>
+        <div class="field">
+          <div class="label">الوصف</div>
+          <input class="input" name="description" />
+        </div>
+        <button class="btn primary full" type="submit">إضافة</button>
+      </form>
+    </div>
+
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">Templates الحالية</h3>
+      <div class="muted" style="margin-bottom:10px">يتم جلبها عبر export لنفس التحدي.</div>
+      <div id="tplList" class="muted">اختر تحديًا لعرض templates.</div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-export" class="hidden" style="margin-top:14px">
+  <div class="grid-2">
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">Export / Copy</h3>
+      <div id="expMsg"></div>
+      <form id="expForm">
+        <div class="field">
+          <div class="label">التحدي</div>
+          <select name="challenge_id" required></select>
+        </div>
+        <div class="row">
+          <button class="btn" type="button" id="btnExport">Export JSON</button>
+          <button class="btn primary" type="button" id="btnCopy">Copy Challenge</button>
+        </div>
+        <div class="field">
+          <div class="label">نتيجة التصدير</div>
+          <textarea name="export_json" readonly></textarea>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel pad">
+      <h3 style="margin:0 0 10px">ملاحظات</h3>
+      <div class="muted" style="line-height:1.9">
+        <div>Export يعيد challenge + test cases + templates.</div>
+        <div>Copy ينشئ نسخة جديدة مع نسخ الملحقات.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-import" class="hidden" style="margin-top:14px">
+  <div class="panel pad">
+    <h3 style="margin:0 0 10px">Import Challenge</h3>
+    <div class="muted" style="margin-bottom:10px">الصق JSON بنفس شكل Postman (challenge/test_cases/solution_templates).</div>
+    <div id="impMsg"></div>
+    <form id="impForm">
+      <div class="field">
+        <div class="label">JSON</div>
+        <textarea name="import_json" required></textarea>
+      </div>
+      <button class="btn primary" type="submit">استيراد</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { api } from '/static/js/api.js';
+  import { getAuth, clearAuth, isTeacher } from '/static/js/auth.js';
+  import { qs, qsa, setHtml, alertBox, escapeHtml } from '/static/js/ui.js';
+
+  const auth = getAuth();
+  if (!auth) {
+    window.location.href = '/login';
+  }
+
+  const msg = qs('#msg');
+  const teacherOnlyHint = qs('#teacherOnlyHint');
+  const teacherTabs = qs('#teacherTabs');
+  const tabStatus = qs('#tabStatus');
+
+  function hideAllSections() {
+    ['challenges', 'testcases', 'templates', 'submissions', 'export', 'import'].forEach((k) => {
+      const s = qs('#tab-' + k);
+      if (s) s.classList.add('hidden');
+    });
+  }
+
+  function activateTab(key) {
+    hideAllSections();
+    const s = qs('#tab-' + key);
+    if (s) s.classList.remove('hidden');
+    qsa('[data-tab]', teacherTabs).forEach((b) => {
+      if (b.getAttribute('data-tab') === key) b.classList.add('primary');
+      else b.classList.remove('primary');
+    });
+    if (tabStatus) tabStatus.textContent = 'التبويب الحالي: ' + key;
+  }
+
+  if (!isTeacher(auth)) {
+    if (msg) msg.appendChild(alertBox('error', 'هذه الصفحة للمعلمين فقط.'));
+    if (teacherTabs) teacherTabs.classList.add('hidden');
+    hideAllSections();
+
+    if (teacherOnlyHint) {
+      teacherOnlyHint.classList.remove('hidden');
+      teacherOnlyHint.innerHTML = `
+        <div style="font-weight:800;margin-bottom:6px">الحساب الحالي غير معلم</div>
+        <div class="muted" style="line-height:1.9">
+          أنت الآن مسجل كـ <strong>${escapeHtml(auth.username || '')}</strong> بدور <strong>${escapeHtml(auth.role || '')}</strong>.
+          <br />
+          لتظهر لك أدوات المعلم: سجّل الخروج ثم سجّل الدخول بحساب معلم.
+        </div>
+        <div class="row" style="margin-top:10px">
+          <a class="btn" href="/login">تسجيل الدخول</a>
+          <button class="btn" id="btnLogoutNow" type="button">تسجيل الخروج</button>
+        </div>
+      `;
+      const btnLogoutNow = qs('#btnLogoutNow');
+      if (btnLogoutNow) {
+        btnLogoutNow.addEventListener('click', () => {
+          clearAuth();
+          window.location.href = '/login';
+        });
+      }
+    }
+  } else {
+    if (teacherTabs) {
+      qsa('[data-tab]', teacherTabs).forEach((b) => {
+        b.addEventListener('click', (e) => {
+          e.preventDefault();
+          const key = b.getAttribute('data-tab');
+          activateTab(key);
+        });
+      });
+    }
+    if (tabStatus && !tabStatus.textContent) tabStatus.textContent = 'جاهز: اضغط على تبويب للتبديل.';
+    activateTab('challenges');
+  }
+
+  function parseRequiredBlocksInput(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return [];
+    if (s.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed)) return parsed.map(String).map(x => x.trim()).filter(Boolean);
+      } catch {
+        // ignore
+      }
+    }
+    return s.split(',').map(x => x.trim()).filter(Boolean);
+  }
+
+  function getPickedRequiredBlocks(formEl) {
+    const picks = Array.from(formEl.querySelectorAll('input[name="required_blocks_pick"]:checked'))
+      .map(i => String(i.value || '').trim())
+      .filter(Boolean);
+    return picks;
+  }
+
+  async function loadChallengesIntoSelects() {
+    const selects = Array.from(document.querySelectorAll('select[name="challenge_id"]'));
+    if (!selects.length) return;
+    const challenges = await api.getChallenges();
+    const opts = (Array.isArray(challenges) ? challenges : []).map(c => `<option value="${c.id}">${escapeHtml(c.title || ('#' + c.id))}</option>`).join('');
+    selects.forEach(sel => { sel.innerHTML = '<option value="" disabled selected>اختر تحديًا</option>' + opts; });
+  }
+
+  async function loadChallengesIntoSubmissionsFilter() {
+    const sel = qs('#subsChallenge');
+    if (!sel) return;
+    const challenges = await api.getChallenges();
+    const opts = (Array.isArray(challenges) ? challenges : [])
+      .map(c => `<option value="${c.id}">${escapeHtml(c.title || ('#' + c.id))}</option>`)
+      .join('');
+    sel.innerHTML = '<option value="">كل التحديات</option>' + opts;
+  }
+
+  function renderSubmissions(subs) {
+    const root = qs('#subsList');
+    if (!root) return;
+    if (!Array.isArray(subs) || subs.length === 0) {
+      root.innerHTML = '<div class="muted">لا توجد محاولات.</div>';
+      return;
+    }
+    root.innerHTML = subs.map(s => {
+      const title = escapeHtml(s.challenge_title || ('#' + s.challenge_id));
+      const student = escapeHtml(s.student_username || ('#' + s.student_id));
+      const result = escapeHtml(s.result || '');
+      const feedback = escapeHtml(s.feedback_text || '');
+      return `
+        <div class="panel pad" style="margin-top:10px" data-sub="${s.id}">
+          <div class="row" style="justify-content:space-between">
+            <div style="font-weight:800">${title}</div>
+            <div class="row">
+              <span class="tag">${student}</span>
+              <span class="tag">#${s.id}</span>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:12px">
+            <div class="field" style="margin:0">
+              <div class="label">النتيجة</div>
+              <select class="input" data-field="result">
+                <option value="success" ${result === 'success' ? 'selected' : ''}>success</option>
+                <option value="partial" ${result === 'partial' ? 'selected' : ''}>partial</option>
+                <option value="fail" ${result === 'fail' ? 'selected' : ''}>fail</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0">
+              <div class="label">ملاحظة المعلم</div>
+              <input class="input" data-field="feedback" value="${feedback}" placeholder="اكتب ملاحظة مختصرة" />
+            </div>
+          </div>
+          <div class="row" style="justify-content:space-between;margin-top:10px">
+            <button class="btn" type="button" data-action="toggle">إظهار/إخفاء الكود</button>
+            <button class="btn primary" type="button" data-action="save">حفظ التقييم</button>
+          </div>
+          <pre class="panel pad hidden" data-field="code" style="margin-top:10px;white-space:pre-wrap;direction:ltr">${escapeHtml(s.code_json || '')}</pre>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function refreshSubmissions() {
+    const subsMsg = qs('#subsMsg');
+    if (subsMsg) subsMsg.innerHTML = '';
+    try {
+      const challengeSel = qs('#subsChallenge');
+      const studentEl = qs('#subsStudent');
+      const payload = {
+        username: auth.username,
+        challenge_id: challengeSel && challengeSel.value ? Number(challengeSel.value) : undefined,
+        student_username: studentEl ? studentEl.value.trim() : ''
+      };
+      const subs = await api.teacherListSubmissions(payload);
+      renderSubmissions(subs);
+    } catch (err) {
+      if (subsMsg) subsMsg.appendChild(alertBox('error', err.message || 'فشل جلب المحاولات'));
+    }
+  }
+
+  function renderChallengeList(challenges) {
+    const root = qs('#challengeList');
+    if (!root) return;
+    if (!Array.isArray(challenges) || challenges.length === 0) {
+      root.innerHTML = '<div class="muted">لا توجد تحديات.</div>';
+      return;
+    }
+    root.innerHTML = challenges.map(c => {
+      const concept = c.concept ? `<span class="tag">${escapeHtml(c.concept)}</span>` : '';
+      const diff = c.difficulty ? `<span class="tag">${escapeHtml(c.difficulty)}</span>` : '';
+      return `
+        <div class="panel pad" style="margin-top:10px">
+          <div class="row" style="justify-content:space-between">
+            <div style="font-weight:800">${escapeHtml(c.title || 'تحدي')}</div>
+            <div class="row">${concept}${diff}</div>
+          </div>
+          <div class="row" style="justify-content:space-between;margin-top:10px">
+            <a class="btn" href="/challenge?id=${c.id}">فتح</a>
+            <button class="btn" type="button" data-del="${c.id}">حذف</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function refreshChallenges() {
+    const challenges = await api.getChallenges();
+    renderChallengeList(challenges);
+    await loadChallengesIntoSelects();
+    await loadChallengesIntoSubmissionsFilter();
+  }
+
+  // Challenge create
+  const challengeForm = qs('#challengeForm');
+  const challengeFormMsg = qs('#challengeFormMsg');
+  if (challengeForm) {
+    challengeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (challengeFormMsg) challengeFormMsg.innerHTML = '';
+      const fd = new FormData(challengeForm);
+      const picked = getPickedRequiredBlocks(challengeForm);
+      const custom = parseRequiredBlocksInput(fd.get('required_blocks_custom'));
+      const requiredBlocks = Array.from(new Set([].concat(picked, custom)));
+      if (!requiredBlocks.length) {
+        if (challengeFormMsg) challengeFormMsg.appendChild(alertBox('error', 'اختر على الأقل block واحد في required_blocks.'));
+        return;
+      }
+      const payload = {
+        username: auth.username,
+        title: fd.get('title'),
+        description: fd.get('description'),
+        required_blocks: requiredBlocks,
+        concept: fd.get('concept'),
+        difficulty: fd.get('difficulty'),
+        json_template: fd.get('json_template')
+      };
+      try {
+        await api.addChallenge(payload);
+        if (challengeFormMsg) challengeFormMsg.appendChild(alertBox('success', 'تمت إضافة التحدي.'));
+        challengeForm.reset();
+        await refreshChallenges();
+      } catch (err) {
+        if (challengeFormMsg) challengeFormMsg.appendChild(alertBox('error', err.message || 'فشل إضافة التحدي'));
+      }
+    });
+  }
+
+  // Challenge delete
+  document.addEventListener('click', async (e) => {
+    const btn = e.target && e.target.closest && e.target.closest('[data-del]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-del');
+    if (!id) return;
+    try {
+      await api.deleteChallenge(id, { username: auth.username });
+      await refreshChallenges();
+    } catch (err) {
+      if (msg) msg.appendChild(alertBox('error', err.message || 'فشل حذف التحدي'));
+    }
+  });
+
+  // Export
+  const expForm = qs('#expForm');
+  const expMsg = qs('#expMsg');
+  const btnExport = qs('#btnExport');
+  const btnCopy = qs('#btnCopy');
+  if (btnExport && expForm) {
+    btnExport.addEventListener('click', async () => {
+      if (expMsg) expMsg.innerHTML = '';
+      const fd = new FormData(expForm);
+      const challengeId = fd.get('challenge_id');
+      if (!challengeId) return;
+      try {
+        const data = await api.exportChallenge(challengeId);
+        expForm.export_json.value = JSON.stringify(data, null, 2);
+      } catch (err) {
+        if (expMsg) expMsg.appendChild(alertBox('error', err.message || 'فشل التصدير'));
+      }
+    });
+  }
+  if (btnCopy && expForm) {
+    btnCopy.addEventListener('click', async () => {
+      if (expMsg) expMsg.innerHTML = '';
+      const fd = new FormData(expForm);
+      const challengeId = fd.get('challenge_id');
+      if (!challengeId) return;
+      try {
+        await api.copyChallenge(challengeId, { username: auth.username });
+        if (expMsg) expMsg.appendChild(alertBox('success', 'تم إنشاء نسخة.'));
+        await refreshChallenges();
+      } catch (err) {
+        if (expMsg) expMsg.appendChild(alertBox('error', err.message || 'فشل النسخ'));
+      }
+    });
+  }
+
+  // Import
+  const impForm = qs('#impForm');
+  const impMsg = qs('#impMsg');
+  if (impForm) {
+    impForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (impMsg) impMsg.innerHTML = '';
+      const fd = new FormData(impForm);
+      try {
+        const raw = fd.get('import_json');
+        const payload = { username: auth.username, ...JSON.parse(raw) };
+        await api.importChallenge(payload);
+        if (impMsg) impMsg.appendChild(alertBox('success', 'تم الاستيراد.'));
+        impForm.reset();
+        await refreshChallenges();
+      } catch (err) {
+        if (impMsg) impMsg.appendChild(alertBox('error', err.message || 'فشل الاستيراد'));
+      }
+    });
+  }
+
+  // Basic select hydration + list render
+  refreshChallenges().catch(() => {});
+
+  // Submissions tab handlers
+  const btnRefreshSubs = qs('#btnRefreshSubs');
+  if (btnRefreshSubs) btnRefreshSubs.addEventListener('click', refreshSubmissions);
+  const subsChallenge = qs('#subsChallenge');
+  if (subsChallenge) subsChallenge.addEventListener('change', refreshSubmissions);
+  const subsStudent = qs('#subsStudent');
+  if (subsStudent) subsStudent.addEventListener('keydown', (e) => { if (e.key === 'Enter') refreshSubmissions(); });
+
+  document.addEventListener('click', async (e) => {
+    const card = e.target && e.target.closest && e.target.closest('[data-sub]');
+    if (!card) return;
+    const id = card.getAttribute('data-sub');
+    const actionBtn = e.target.closest('[data-action]');
+    if (!actionBtn) return;
+    const action = actionBtn.getAttribute('data-action');
+    if (action === 'toggle') {
+      const pre = card.querySelector('[data-field="code"]');
+      if (pre) pre.classList.toggle('hidden');
+      return;
+    }
+    if (action === 'save') {
+      const resultSel = card.querySelector('[data-field="result"]');
+      const feedbackIn = card.querySelector('[data-field="feedback"]');
+      const subsMsg = qs('#subsMsg');
+      if (subsMsg) subsMsg.innerHTML = '';
+      try {
+        await api.teacherUpdateSubmission(id, {
+          username: auth.username,
+          result: resultSel ? resultSel.value : undefined,
+          feedback_text: feedbackIn ? feedbackIn.value : ''
+        });
+        if (subsMsg) subsMsg.appendChild(alertBox('success', 'تم حفظ التقييم.'));
+      } catch (err) {
+        if (subsMsg) subsMsg.appendChild(alertBox('error', err.message || 'فشل حفظ التقييم'));
+      }
+    }
+  });
+</script>
+{% endblock %}
